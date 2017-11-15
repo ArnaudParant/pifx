@@ -1,15 +1,17 @@
-#!/usr/bin/env python
-
 # External deps
 import time
-import json
+import logging
 import lifxlan
+
+# Internal deps
+from pifx.utils import ApiException
 
 class Group(lifxlan.group.Group):
 
     def __init__(self, lan, group_name):
         self.group_name = group_name
         self.group = lan.get_devices_by_group(group_name)
+        super().__init__()
 
     @staticmethod
     def list_group(lan):
@@ -17,6 +19,24 @@ class Group(lifxlan.group.Group):
         for device in lan.get_devices():
             groups.add(device.get_group())
         return list(groups)
+
+    @staticmethod
+    def stats_group(lan):
+        stats = {}
+        for device in lan.get_devices():
+            group = device.get_group()
+            if group is None:
+                group = "Unassigned"
+            if group not in stats:
+                stats[group] = {"devices": []}
+            stats[group]["devices"].append(device)
+
+        for group, group_stats in stats.items():
+            power = 0
+            for device in group_stats["devices"]:
+                power += device.get_power()
+            group_stats["power"] = power / len(group_stats["devices"])
+        return stats
 
     def get_name(self):
         return self.group_name
@@ -45,39 +65,51 @@ class Group(lifxlan.group.Group):
         self.group.set_power("off")
         self.__log("Set Power", "off")
 
+    def set_power(self, power, duration=0, wait=False, hard=False):
+        if power == "on":
+            self.power_on(hard=hard)
+        elif power == "off":
+            self.power_off(duration=duration, wait=wait)
+        else:
+            raise ApiException("Invalid power value: %s" % power)
+
     def set_color(self, color, duration=0, wait=False):
         self.power_on()
+        color[0] *= 65535
+        color[1] *= 65535
+        color[2] *= 65535
+        color[3] *= 2500 + color[3] * 6500,
         self.group.set_color(color, duration * 1000)
         self.__log("Set Color", color, duration)
         self.__wait(wait, duration)
 
     def set_hue(self, hue, duration=0, wait=False):
         self.power_on()
-        self.group.set_hue(hue, duration * 1000)
+        self.group.set_hue(hue * 65535, duration * 1000)
         self.__log("Set Hue", hue, duration)
         self.__wait(wait, duration)
 
     def set_brightness(self, brightness, duration=0, wait=False):
         self.power_on()
-        self.group.set_brightness(brightness, duration * 1000)
+        self.group.set_brightness(brightness * 65535, duration * 1000)
         self.__log("Set Brightness", brightness, duration)
         self.__wait(wait, duration)
 
     def set_saturation(self, saturation, duration=0, wait=False):
         self.power_on()
-        self.group.set_saturation(saturation, duration * 1000)
+        self.group.set_saturation(saturation * 65535, duration * 1000)
         self.__log("Set Saturation", saturation, duration)
         self.__wait(wait, duration)
 
     def set_colortemp(self, colortemp, duration=0, wait=False):
         self.power_on()
-        self.group.set_colortemp(colortemp, duration * 1000)
+        self.group.set_colortemp(2500 + colortemp * 6500, duration * 1000)
         self.__log("Set Color Temperature", colortemp, duration)
         self.__wait(wait, duration)
 
     def set_infrared(self, infrared_brightness, duration=0, wait=False):
         self.power_on()
-        self.group.set_infrared(infrared_brightness, duration * 1000)
+        self.group.set_infrared(infrared_brightness * 65535, duration * 1000)
         self.__log("Set Color Temperature", infrared_brightness, duration)
         self.__wait(wait, duration)
 
@@ -97,5 +129,5 @@ class Group(lifxlan.group.Group):
                 str_duration = (" in %.1fs" % duration)
         else:
             str_duration = ""
-        print("Group %s: %s: %s%s" % (self.get_name(), action,
-                                      str(value), str_duration))
+        logging.info("Group %s: %s: %s%s" % (self.get_name(), action,
+                                             str(value), str_duration))
