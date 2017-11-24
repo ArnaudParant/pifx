@@ -29,6 +29,12 @@ def main():
     logging.basicConfig(level=logging.INFO)
     app.run(debug=False, host=args.host, port=args.port, processes=50)
 
+@app.route('/', methods=["GET"])
+def hello():
+    def action():
+        return "Hey! Listen"
+    return flask_utils.wrapper(action)
+
 ##########################################################################
 # DEVICES ROUTES
 ##########################################################################

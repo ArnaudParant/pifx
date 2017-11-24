@@ -15,5 +15,11 @@ lint:
 run:
 	docker run -it -p 9100:9100 --network=host $(LOCAL_IMAGE_NAME)
 
+save:
+	docker save -o $(PROJECT_NAME).docker $(LOCAL_IMAGE_NAME)
+
+load:
+	docker load -i $(PROJECT_NAME).docker
+
 clean:
 	rm -f *.pyc */*.pyc */*/*.pyc
