@@ -2,6 +2,7 @@
 import argparse
 import logging
 from flask import Flask, request
+from flask_cors import CORS
 import lifxlan
 
 # Internal deps
@@ -13,6 +14,7 @@ from pifx.group import Group
 ##########################################################################
 
 app = Flask("pifx-api")
+CORS(app)
 
 def options():
     parser = argparse.ArgumentParser()
@@ -76,13 +78,28 @@ def group_get_power(group_name):
         return {"power": group.get_power()}
     return flask_utils.wrapper(action)
 
+@app.route('/group/<group_name>/switch_power', methods=["POST"])
+def group_switch_power(group_name):
+    def action():
+        group = Group(LAN, group_name)
+        group.switch_power()
+        return {"success": True}
+    return flask_utils.wrapper(action)
+
 @app.route('/group/<group_name>/power/<value>', methods=["POST"])
 def group_set_power(group_name, value):
     def action():
         group = Group(LAN, group_name)
         data = flask_utils.get_data(request.data)
-        group.set_power(float(value), duration=data["duration"], wait=data["wait"])
+        group.set_power(value, duration=data["duration"], wait=data["wait"])
         return {"success": True}
+    return flask_utils.wrapper(action)
+
+@app.route('/group/<group_name>/color', methods=["GET"])
+def group_get_color(group_name):
+    def action():
+        group = Group(LAN, group_name)
+        return {"color": group.get_color()}
     return flask_utils.wrapper(action)
 
 @app.route('/group/<group_name>/color/<value>', methods=["POST"])
@@ -94,6 +111,13 @@ def group_set_color(group_name, value):
         return {"success": True}
     return flask_utils.wrapper(action)
 
+@app.route('/group/<group_name>/hue', methods=["GET"])
+def group_get_hue(group_name):
+    def action():
+        group = Group(LAN, group_name)
+        return {"hue": group.get_hue()}
+    return flask_utils.wrapper(action)
+
 @app.route('/group/<group_name>/hue/<value>', methods=["POST"])
 def group_set_hue(group_name, value):
     def action():
@@ -103,13 +127,11 @@ def group_set_hue(group_name, value):
         return {"success": True}
     return flask_utils.wrapper(action)
 
-@app.route('/group/<group_name>/brightness/<value>', methods=["POST"])
-def group_set_brightness(group_name, value):
+@app.route('/group/<group_name>/saturation', methods=["GET"])
+def group_get_saturation(group_name):
     def action():
         group = Group(LAN, group_name)
-        data = flask_utils.get_data(request.data)
-        group.set_brightness(float(value), duration=data["duration"], wait=data["wait"])
-        return {"success": True}
+        return {"saturation": group.get_saturation()}
     return flask_utils.wrapper(action)
 
 @app.route('/group/<group_name>/saturation/<value>', methods=["POST"])
@@ -121,6 +143,29 @@ def group_set_saturation(group_name, value):
         return {"success": True}
     return flask_utils.wrapper(action)
 
+@app.route('/group/<group_name>/brightness', methods=["GET"])
+def group_get_brightness(group_name):
+    def action():
+        group = Group(LAN, group_name)
+        return {"brightness": group.get_brightness()}
+    return flask_utils.wrapper(action)
+
+@app.route('/group/<group_name>/brightness/<value>', methods=["POST"])
+def group_set_brightness(group_name, value):
+    def action():
+        group = Group(LAN, group_name)
+        data = flask_utils.get_data(request.data)
+        group.set_brightness(float(value), duration=data["duration"], wait=data["wait"])
+        return {"success": True}
+    return flask_utils.wrapper(action)
+
+@app.route('/group/<group_name>/colortemp', methods=["GET"])
+def group_get_colortemp(group_name):
+    def action():
+        group = Group(LAN, group_name)
+        return {"colortemp": group.get_colortemp()}
+    return flask_utils.wrapper(action)
+
 @app.route('/group/<group_name>/colortemp/<value>', methods=["POST"])
 def group_set_colortemp(group_name, value):
     def action():
@@ -128,6 +173,13 @@ def group_set_colortemp(group_name, value):
         data = flask_utils.get_data(request.data)
         group.set_colortemp(float(value), duration=data["duration"], wait=data["wait"])
         return {"success": True}
+    return flask_utils.wrapper(action)
+
+@app.route('/group/<group_name>/infrared', methods=["GET"])
+def group_get_infrared(group_name):
+    def action():
+        group = Group(LAN, group_name)
+        return {"infrared": group.get_infrared()}
     return flask_utils.wrapper(action)
 
 @app.route('/group/<group_name>/infrared/<value>', methods=["POST"])
